@@ -2,3 +2,7 @@ g4f==0.3.3.2
 PyQt6==6.7.1
 PyQt6-Fluent-Widgets==1.7.0
 pyautogui==0.9.54
+openai>=1.0.0
+requests>=2.31.0
+ollama>=0.1.0
+aiogram>=3.0.0

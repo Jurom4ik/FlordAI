@@ -9,11 +9,21 @@
 > Если вдруг действия программы приведут к потери данных и/или повреждению устройства - автор проекта не несёт никакой ответственности.
 > (Я вас предупредил)
 
+## Скриншоты
+
+### Очистка кэша и корзины
+![Очистка кэша и корзины](res/screenshots/1.jpg)
+
+### Открытие планировщика задач
+![Планировщик задач](res/screenshots/2.jpg)
+
 ## Возможности
 
 - **Голосовое управление компьютером** - Flord может выполнять действия на вашем ПК через Python-код
-- **Два режима работы ИИ:**
-  - **OpenRouter API** - доступ к Claude, GPT-4, Llama и другим мощным моделям
+- **Четыре режима работы ИИ:**
+  - **OpenRouter API** - доступ к Claude, GPT-4, Llama и другим мощным моделям (бесплатные модели с `:free`)
+  - **Google Gemini** - бесплатный API от Google AI Studio
+  - **Groq** - сверхбыстрый бесплатный API с Llama 3.1 и другими моделями
   - **Ollama (локальные модели)** - полностью локальная работа с LLM, приватность данных
 - **Управление через Telegram** - общайтесь с ассистентом из любой точки мира
 - **Автоматическая установка Ollama** - простая настройка локальных моделей
@@ -45,7 +55,17 @@ python flord\main.py
 ### OpenRouter (облачные модели)
 1. Получите API ключ на [openrouter.ai](https://openrouter.ai)
 2. Введите ключ в настройках приложения
-3. Выберите модель (по умолчанию: Claude 3.5 Sonnet)
+3. Выберите модель с суффиксом `:free` для бесплатного использования
+
+### Google Gemini (бесплатный API)
+1. Получите API ключ на [makersuite.google.com](https://makersuite.google.com/app/apikey)
+2. Введите ключ в настройках приложения
+3. Выберите модель (рекомендуется: `gemini-1.5-flash`)
+
+### Groq (быстрый бесплатный API)
+1. Получите API ключ на [console.groq.com](https://console.groq.com/keys)
+2. Введите ключ в настройках приложения  
+3. Выберите модель (рекомендуется: `llama-3.1-8b-instant`)
 
 ### Ollama (локальные модели)
 1. Включите "Автоматическая установка" в настройках
@@ -76,6 +96,8 @@ python flord\main.py
 ## Благодарности
 
 - [OpenRouter](https://openrouter.ai) - Unified API для LLM
+- [Google Gemini](https://makersuite.google.com) - Бесплатный API от Google
+- [Groq](https://groq.com) - Сверхбыстрый API для LLM
 - [Ollama](https://ollama.com) - Локальные модели
 - [aiogram](https://docs.aiogram.dev) - Telegram Bot API
 - [PyQt6](https://www.riverbankcomputing.com/software/pyqt/)
