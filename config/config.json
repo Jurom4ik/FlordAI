@@ -1,0 +1,12 @@
+{
+  "provider": "ollama",
+  "openrouter_api_key": "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",
+  "openrouter_model": "meta-llama/llama-3.2-3b-instruct:free",
+  "ollama_host": "http://localhost:11434",
+  "ollama_model": "llama3.1:8b",
+  "ollama_auto_install": true,
+  "telegram_bot_token": "8632792414:AAF7r0UE-ZuEnw8lvGwQcykWJrHspLT_SGY",
+  "telegram_enabled": false,
+  "telegram_allowed_users": [],
+  "theme_color": "#cb4483"
+}
