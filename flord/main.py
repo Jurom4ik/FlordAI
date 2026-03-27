@@ -11,6 +11,7 @@ from config import Config
 from mind import Mind, Message
 from telegram_bot import TelegramBot
 from ollama_manager import OllamaManager
+from llm_provider import LLMProvider
 
 
 class Widget(QFrame):
@@ -139,6 +140,16 @@ class UI(MSFluentWindow):
         if self.telegram_bot:
             asyncio.run(self.telegram_bot.stop())
         event.accept()
+    
+    def nativeEvent(self, eventType, message):
+        """Обработка нативных событий с защитой от ошибок"""
+        try:
+            return super().nativeEvent(eventType, message)
+        except Exception as e:
+            # Игнорируем ошибки GetCursorPos и другие нативные ошибки
+            if "GetCursorPos" in str(e) or "pywintypes" in str(e):
+                return False, 0
+            raise
 
 
 class Chat(QWidget):
@@ -853,6 +864,8 @@ class Settings(QFrame):
                 self.window.show_info_bar("✅ Подключение к Groq успешно!")
             else:
                 self.window.show_info_bar("❌ Ошибка подключения. Проверьте API ключ.")
+    
+    def save_telegram_settings(self):
         """Сохранить настройки Telegram"""
         self.config.telegram_bot_token = self.telegram_token_input.text()
         self.config.telegram_enabled = self.telegram_enabled_check.isChecked()
