@@ -1,6 +1,6 @@
 {
-  "provider": "gemini",
-  "openrouter_api_key": "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",
+  "provider": "groq",
+  "openrouter_api_key": "",
   "openrouter_model": "meta-llama/llama-3.2-3b-instruct:free",
   "gemini_api_key": "",
   "gemini_model": "gemini-1.5-flash",
@@ -9,7 +9,7 @@
   "ollama_host": "http://localhost:11434",
   "ollama_model": "llama3.1:8b",
   "ollama_auto_install": true,
-  "telegram_bot_token": "PASTE TOKEN",
+  "telegram_bot_token": "",
   "telegram_enabled": false,
   "telegram_allowed_users": [],
   "theme_color": "#cb4483"

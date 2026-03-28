@@ -7,11 +7,12 @@ from PyQt6.QtWidgets import QApplication, QWidget, QHBoxLayout, QVBoxLayout, QLa
 from qfluentwidgets import *
 from qframelesswindow.utils import getSystemAccentColor
 
-from config import Config
-from mind import Mind, Message
-from telegram_bot import TelegramBot
-from ollama_manager import OllamaManager
-from llm_provider import LLMProvider
+from flord.config import Config
+from flord.mind import Mind, Message
+from flord.telegram_bot import TelegramBot
+from flord.ollama_manager import OllamaManager
+from flord.llm_provider import LLMProvider
+from flord.voice_assistant import VoiceAssistant
 
 
 class Widget(QFrame):
@@ -196,6 +197,11 @@ class Chat(QWidget):
         self.cancel_button.setVisible(False)
         self.cancel_button.clicked.connect(self.cancel_request)
         self.input_layout.addWidget(self.cancel_button)
+        
+        # Кнопка удаления последнего сообщения
+        self.delete_last_button = PushButton("🗑️ Удалить последнее", self)
+        self.delete_last_button.clicked.connect(self.delete_last_message)
+        self.input_layout.addWidget(self.delete_last_button)
 
         # Добавляем горизонтальный лейаут в основной вертикальный
         self.layout.addLayout(self.input_layout)
@@ -261,6 +267,23 @@ class Chat(QWidget):
         if self.mind.cancel_current_request():
             self.cancel_button.setVisible(False)
             self.send_button.setVisible(True)
+    
+    def delete_last_message(self):
+        """Удалить последнее сообщение из чата"""
+        if self.messages_layout.count() > 0:
+            # Удаляем последний виджет
+            last_item = self.messages_layout.takeAt(self.messages_layout.count() - 1)
+            if last_item:
+                widget = last_item.widget()
+                if widget:
+                    widget.deleteLater()
+            
+            # Удаляем последнее сообщение из истории
+            if self.mind.messages_array and len(self.mind.messages_array) > 1:
+                self.mind.messages_array.pop()
+                self.mind.messages_array.pop()  # Удаляем и ответ ИИ
+            
+            self.window.show_info_bar("🗑️ Последнее сообщение удалено", 2000)
 
 
 class Settings(QFrame):
@@ -328,8 +351,13 @@ class Settings(QFrame):
         self.api_key_input.setPlaceholderText("Введите ваш OpenRouter API ключ")
         self.api_key_input.textChanged.connect(self.on_api_key_changed)
         
+        self.delete_openrouter_token_btn = PushButton("🗑️", self)
+        self.delete_openrouter_token_btn.setToolTip("Удалить токен")
+        self.delete_openrouter_token_btn.clicked.connect(self.delete_openrouter_token)
+        
         api_layout.addWidget(api_label)
         api_layout.addWidget(self.api_key_input)
+        api_layout.addWidget(self.delete_openrouter_token_btn)
         layout.addLayout(api_layout)
         
         # Model - ComboBox с бесплатными моделями
@@ -396,8 +424,13 @@ class Settings(QFrame):
         self.gemini_api_key_input.setPlaceholderText("Введите Gemini API ключ")
         self.gemini_api_key_input.textChanged.connect(self.on_gemini_api_key_changed)
         
+        self.delete_gemini_token_btn = PushButton("🗑️", self)
+        self.delete_gemini_token_btn.setToolTip("Удалить токен")
+        self.delete_gemini_token_btn.clicked.connect(self.delete_gemini_token)
+        
         api_layout.addWidget(api_label)
         api_layout.addWidget(self.gemini_api_key_input)
+        api_layout.addWidget(self.delete_gemini_token_btn)
         layout.addLayout(api_layout)
         
         # Model
@@ -446,8 +479,13 @@ class Settings(QFrame):
         self.groq_api_key_input.setPlaceholderText("Введите Groq API ключ")
         self.groq_api_key_input.textChanged.connect(self.on_groq_api_key_changed)
         
+        self.delete_groq_token_btn = PushButton("🗑️", self)
+        self.delete_groq_token_btn.setToolTip("Удалить токен")
+        self.delete_groq_token_btn.clicked.connect(self.delete_groq_token)
+        
         api_layout.addWidget(api_label)
         api_layout.addWidget(self.groq_api_key_input)
+        api_layout.addWidget(self.delete_groq_token_btn)
         layout.addLayout(api_layout)
         
         # Model
@@ -559,8 +597,13 @@ class Settings(QFrame):
         self.telegram_token_input.setText(self.config.telegram_bot_token)
         self.telegram_token_input.setPlaceholderText("Введите токен от @BotFather")
         
+        self.delete_telegram_token_btn = PushButton("🗑️", self)
+        self.delete_telegram_token_btn.setToolTip("Удалить токен")
+        self.delete_telegram_token_btn.clicked.connect(self.delete_telegram_token)
+        
         token_layout.addWidget(token_label)
         token_layout.addWidget(self.telegram_token_input)
+        token_layout.addWidget(self.delete_telegram_token_btn)
         layout.addLayout(token_layout)
         
         # Save token button
@@ -865,8 +908,37 @@ class Settings(QFrame):
             else:
                 self.window.show_info_bar("❌ Ошибка подключения. Проверьте API ключ.")
     
+    def delete_openrouter_token(self):
+        """Удалить токен OpenRouter"""
+        self.config.openrouter_api_key = ""
+        self.config.save()
+        self.api_key_input.clear()
+        self.window.show_info_bar("🗑️ Токен OpenRouter удален", 3000)
+    
+    def delete_gemini_token(self):
+        """Удалить токен Gemini"""
+        self.config.gemini_api_key = ""
+        self.config.save()
+        self.gemini_api_key_input.clear()
+        self.window.show_info_bar("🗑️ Токен Gemini удален", 3000)
+    
+    def delete_groq_token(self):
+        """Удалить токен Groq"""
+        self.config.groq_api_key = ""
+        self.config.save()
+        self.groq_api_key_input.clear()
+        self.window.show_info_bar("🗑️ Токен Groq удален", 3000)
+    
+    def delete_telegram_token(self):
+        """Удалить токен Telegram"""
+        self.config.telegram_bot_token = ""
+        self.config.telegram_enabled = False
+        self.config.save()
+        self.telegram_token_input.clear()
+        self.telegram_enabled_check.setChecked(False)
+        self.window.show_info_bar("🗑️ Токен Telegram удален", 3000)
+    
     def save_telegram_settings(self):
-        """Сохранить настройки Telegram"""
         self.config.telegram_bot_token = self.telegram_token_input.text()
         self.config.telegram_enabled = self.telegram_enabled_check.isChecked()
         self.config.save()

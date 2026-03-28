@@ -10,7 +10,7 @@ import shutil
 
 def build():
     """Build standalone executable for Windows"""
-    print("🔨 Building Flord AI v2.0.0...")
+    print("🔨 Building Flord AI v0.0.2...")
     print("=" * 50)
     
     # Проверяем наличие pyinstaller
@@ -45,6 +45,9 @@ def build():
         "--uac-admin",  # Запрос прав администратора
         "--icon=" + icon_path if icon_path else "",
         "--add-data=res;res",
+        "--exclude-module=PyQt5",
+        "--exclude-module=PySide2",
+        "--exclude-module=PySide6",
         "--hidden-import=PyQt6",
         "--hidden-import=PyQt6.sip",
         "--hidden-import=qfluentwidgets",
