@@ -6,8 +6,8 @@ from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
 from aiogram.enums import ParseMode
 
-from config import Config
-from llm_provider import LLMProvider
+from flord.config import Config
+from flord.llm_provider import LLMProvider
 
 
 logging.basicConfig(level=logging.INFO)

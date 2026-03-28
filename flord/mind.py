@@ -7,10 +7,10 @@ import os
 from dataclasses import dataclass
 from typing import Optional, Callable
 
-from llm_provider import LLMProvider
-from config import Config
-from package_manager import package_manager
-from admin_helper import ensure_admin_and_execute, is_admin
+from flord.llm_provider import LLMProvider
+from flord.config import Config
+from flord.package_manager import package_manager
+from flord.admin_helper import ensure_admin_and_execute, is_admin
 
 
 pattern_code = r"<python>(.*?)</python>"
@@ -172,6 +172,52 @@ class Mind:
                 self.titleBar.set_animation(0)
             return True
         return False
+    
+    def check_code_errors(self, code: str) -> list:
+        """Проверить код на ошибки"""
+        errors = []
+        
+        try:
+            # Проверка синтаксиса
+            compile(code, '<string>', 'exec')
+        except SyntaxError as e:
+            errors.append({
+                'type': 'syntax_error',
+                'line': e.lineno,
+                'message': str(e)
+            })
+        
+        # Проверка на потенциально опасные операции
+        dangerous_patterns = [
+            r'import\s+os\s*;\s*os\.system\(',
+            r'import\s+subprocess\s*;\s*subprocess\.run\(',
+            r'import\s+subprocess\s*;\s*subprocess\.call\(',
+            r'exec\(',
+            r'eval\(',
+        ]
+        
+        for pattern in dangerous_patterns:
+            if re.search(pattern, code):
+                errors.append({
+                    'type': 'dangerous_operation',
+                    'message': 'Обнаружена потенциально опасная операция'
+                })
+        
+        return errors
+    
+    def auto_fix_code(self, code: str, errors: list) -> str:
+        """Автоматически исправить простые ошибки в коде"""
+        fixed_code = code
+        
+        for error in errors:
+            if error['type'] == 'syntax_error':
+                # Простые исправления синтаксических ошибок
+                if 'unexpected EOF while parsing' in error['message']:
+                    # Добавляем недостающую закрывающую скобку
+                    if fixed_code.count('(') > fixed_code.count(')'):
+                        fixed_code += ')'
+        
+        return fixed_code
 
     def get_ai_response(self, input_string, card=None):
         """Получить ответ от ИИ"""
@@ -256,21 +302,116 @@ class Mind:
                     code_inside_tags = match.group(1)
                     code = code_inside_tags
                     
-                    # 1. Проверяем и устанавливаем необходимые пакеты
+                    # 1. Проверяем код на ошибки
+                    errors = self.check_code_errors(code)
+                    if errors:
+                        print(f"⚠️ Обнаружены ошибки в коде:")
+                        for error in errors:
+                            print(f"   - {error['type']}: {error['message']}")
+                        
+                        # 2. Пытаемся автоматически исправить
+                        fixed_code = self.auto_fix_code(code, errors)
+                        if fixed_code != code:
+                            print(f"🔧 Автоматически исправлен код")
+                            code = fixed_code
+                    
+                    # 3. Проверяем и устанавливаем необходимые пакеты
                     installed, failed = package_manager.install_for_code(code)
                     if installed:
                         print(f"✅ Установлены пакеты: {', '.join(installed)}")
                     if failed:
                         print(f"❌ Не удалось установить: {', '.join(failed)}")
                     
-                    # 2. Выполняем код с автоматическим UAC запросом если нужно
-                    result = ensure_admin_and_execute(code)
+                    # 4. Выполняем код с возможностью самоисправления
+                    result = self.execute_with_self_correction(code)
                     return result
                     
             else:
                 return None
         except Exception as e:
             return f"Ошибка выполнения кода: {e}"
+    
+    def self_correcting_agent(self, code: str, error_message: str) -> str:
+        """Самоисправляющийся агент для кода"""
+        print(f"🤖 Запуск самоисправляющегося агента...")
+        print(f"❌ Ошибка: {error_message}")
+        
+        # Создаем prompt для исправления ошибки
+        correction_prompt = f"""
+        Код:
+        {code}
+        
+        Ошибка:
+        {error_message}
+        
+        Пожалуйста, исправь код так, чтобы устранить эту ошибку. 
+        Верни только исправленный код в тегах <python>...</python>.
+        Не добавляй объяснений.
+        """
+        
+        try:
+            # Получаем исправленный код от ИИ
+            response = self.llm_provider.chat_stream([
+                {"role": "user", "content": correction_prompt}
+            ])
+            
+            # Извлекаем код из ответа
+            if "<python>" in response and "</python>" in response:
+                match = re.search(pattern_code, response, re.DOTALL)
+                if match:
+                    corrected_code = match.group(1)
+                    print(f"✅ Получен исправленный код")
+                    
+                    # Проверяем исправленный код
+                    errors = self.check_code_errors(corrected_code)
+                    if errors:
+                        print(f"⚠️ В исправленном коде все еще есть ошибки:")
+                        for error in errors:
+                            print(f"   - {error['type']}: {error['message']}")
+                        return code  # Возвращаем исходный код если исправленный тоже с ошибками
+                    
+                    return corrected_code
+            
+            print(f"❌ Не удалось получить исправленный код от ИИ")
+            return code
+            
+        except Exception as e:
+            print(f"❌ Ошибка самоисправляющегося агента: {e}")
+            return code
+    
+    def execute_with_self_correction(self, code: str, max_attempts: int = 3) -> str:
+        """Выполнить код с возможностью самоисправления"""
+        attempt = 1
+        
+        while attempt <= max_attempts:
+            try:
+                print(f"🚀 Попытка выполнения кода #{attempt}")
+                
+                # Выполняем код
+                result = ensure_admin_and_execute(code)
+                print(f"✅ Код успешно выполнен")
+                return result
+                
+            except Exception as e:
+                print(f"❌ Ошибка выполнения кода: {e}")
+                
+                if attempt < max_attempts:
+                    print(f"🔄 Запуск самоисправления...")
+                    # Пытаемся исправить код
+                    corrected_code = self.self_correcting_agent(code, str(e))
+                    
+                    if corrected_code != code:
+                        print(f"🔧 Код был исправлен, пробуем снова")
+                        code = corrected_code
+                        attempt += 1
+                    else:
+                        print(f"❌ Самоисправление не удалось")
+                        attempt += 1
+                else:
+                    print(f"❌ Достигнуто максимальное количество попыток")
+                    return f"Ошибка выполнения кода после {max_attempts} попыток: {e}"
+        
+        return "Не удалось выполнить код"
     
     def _check_if_requires_admin(self, code: str) -> bool:
         """Проверить требует ли код прав администратора (встроенная проверка)"""

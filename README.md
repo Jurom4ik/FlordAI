@@ -1,7 +1,20 @@
 # Flord AI
 #### Умный ИИ-ассистент для Windows 10/11 с управлением через Telegram
 
-![Скриншот](res/screenshots/1.jpg)
+## 🚀 Скачать
+
+👉 **Последняя версия:** v0.0.1
+
+📦 **Скачать приложение:**
+https://github.com/Jurom4ik/FlordAI/releases/tag/v0.0.1
+
+или сразу `.exe`:
+https://github.com/Jurom4ik/FlordAI/releases/download/v0.0.1/FlordAI.exe
+
+---
+
+⚠️ Если Windows ругается на файл — нажмите "Подробнее" → "Всё равно запустить"
+
 
 > ### Важно
 > Этот проект является экспериментом. 
@@ -106,4 +119,4 @@ python flord\main.py
 ---
 
 **Разработчик:** Jurom4ik  
-**Версия:** 2.0.0
+**Версия:** 0.0.2
