@@ -9,10 +9,10 @@ from qframelesswindow.utils import getSystemAccentColor
 
 from flord.config import Config
 from flord.mind import Mind, Message
-from flord.telegram_bot import TelegramBot
 from flord.ollama_manager import OllamaManager
 from flord.llm_provider import LLMProvider
-from flord.voice_assistant import VoiceAssistant
+# from flord.telegram_bot import TelegramBot  # Отключено - не работает
+# from flord.voice_assistant import VoiceAssistant  # Временно отключено - нужен pygame
 
 
 class Widget(QFrame):
@@ -38,7 +38,6 @@ class UI(MSFluentWindow):
         
         # Инициализация компонентов
         self.mind = Mind(config=self.config)
-        self.telegram_bot: TelegramBot = None
         self.ollama_manager = OllamaManager(host=self.config.ollama_host)
         
         # UI настройки
@@ -55,7 +54,7 @@ class UI(MSFluentWindow):
         
         self.resize(800, 600)
         self.setWindowTitle('Flord AI')
-        self.setWindowIcon(QIcon('res/anim/idle.gif'))
+        self.setWindowIcon(QIcon('res/Flord.ico'))
         setTheme(theme=Theme.AUTO)
         
         if sys.platform in ["win32", "darwin"] and False:
@@ -67,34 +66,9 @@ class UI(MSFluentWindow):
         self.addSubInterface(settings, FluentIcon.SETTING, 'Настройки')
         self.stackedWidget.setStyleSheet('QWidget{background: transparent}')
         
-        # Запускаем Telegram бота если включен
-        if self.config.telegram_enabled and self.config.telegram_bot_token:
-            self.start_telegram_bot()
-        
         # Проверяем Ollama если используется
         if self.config.provider == "ollama" and self.config.ollama_auto_install:
             self.check_ollama()
-    
-    def start_telegram_bot(self):
-        """Запустить Telegram бота"""
-        try:
-            self.telegram_bot = TelegramBot(
-                config=self.config,
-                llm_provider=self.mind.llm_provider,
-                mind=self.mind
-            )
-            # Запускаем в отдельном потоке
-            loop = asyncio.new_event_loop()
-            thread = threading.Thread(target=self._run_bot, args=(loop,))
-            thread.daemon = True
-            thread.start()
-        except Exception as e:
-            print(f"Ошибка запуска Telegram бота: {e}")
-    
-    def _run_bot(self, loop):
-        """Запустить бота в отдельном потоке"""
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(self.telegram_bot.start())
     
     def check_ollama(self):
         """Проверить и установить Ollama при необходимости"""
@@ -138,8 +112,6 @@ class UI(MSFluentWindow):
     
     def closeEvent(self, event):
         """Обработка закрытия окна"""
-        if self.telegram_bot:
-            asyncio.run(self.telegram_bot.stop())
         event.accept()
     
     def nativeEvent(self, eventType, message):
@@ -305,7 +277,6 @@ class Settings(QFrame):
         self._create_groq_settings()
         self._create_ollama_settings()
         self._update_provider_visibility()
-        self._create_telegram_settings()
         self._create_ui_settings()
         
         # Добавляем растяжку в конец
@@ -758,11 +729,6 @@ class Settings(QFrame):
         self.config.ollama_model = value
         self.config.save()
     
-    def on_telegram_enabled_changed(self, state):
-        """Обработка включения Telegram"""
-        self.config.telegram_enabled = bool(state)
-        self.config.save()
-    
     def on_theme_color_changed(self, value):
         """Обработка изменения цвета темы"""
         self.config.theme_color = value
@@ -821,8 +787,10 @@ class Settings(QFrame):
     
     def check_openrouter(self):
         """Проверить подключение к OpenRouter"""
-        if self.mind and self.mind.llm_provider:
-            if self.mind.llm_provider.is_available():
+        if self.mind:
+            # Сначала переключаемся на OpenRouter
+            self.mind.switch_provider("openrouter")
+            if self.mind.llm_provider and self.mind.llm_provider.is_available():
                 self.window.show_info_bar("✅ Подключение к OpenRouter успешно!")
             else:
                 self.window.show_info_bar("❌ Ошибка подключения. Проверьте API ключ.")
@@ -928,24 +896,6 @@ class Settings(QFrame):
         self.config.save()
         self.groq_api_key_input.clear()
         self.window.show_info_bar("🗑️ Токен Groq удален", 3000)
-    
-    def delete_telegram_token(self):
-        """Удалить токен Telegram"""
-        self.config.telegram_bot_token = ""
-        self.config.telegram_enabled = False
-        self.config.save()
-        self.telegram_token_input.clear()
-        self.telegram_enabled_check.setChecked(False)
-        self.window.show_info_bar("🗑️ Токен Telegram удален", 3000)
-    
-    def save_telegram_settings(self):
-        self.config.telegram_bot_token = self.telegram_token_input.text()
-        self.config.telegram_enabled = self.telegram_enabled_check.isChecked()
-        self.config.save()
-        
-        if self.config.telegram_enabled and self.config.telegram_bot_token:
-            self.window.show_info_bar("Запуск Telegram бота...", 3000)
-            self.window.start_telegram_bot()
 
 
 class MessageCard(CardWidget):

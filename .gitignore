@@ -7,6 +7,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Build outputs
+build/
+dist/
+release/
+*.exe
+
 # C extensions
 *.so
 

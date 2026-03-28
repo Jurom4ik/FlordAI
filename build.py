@@ -1,5 +1,5 @@
 """
-Build script for Flord AI v2.0.0
+Build script for Flord AI v0.0.3
 Creates standalone executable with PyInstaller
 """
 import os
@@ -10,7 +10,7 @@ import shutil
 
 def build():
     """Build standalone executable for Windows"""
-    print("🔨 Building Flord AI v0.0.2...")
+    print("🔨 Building Flord AI v0.0.3...")
     print("=" * 50)
     
     # Проверяем наличие pyinstaller
@@ -30,7 +30,7 @@ def build():
         shutil.rmtree("dist")
     
     # Настройка иконки
-    icon_path = "res/icon.ico" if os.path.exists("res/icon.ico") else ""
+    icon_path = "res/Flord.ico" if os.path.exists("res/Flord.ico") else ""
     if icon_path:
         print(f"🎨 Using icon: {icon_path}")
     else:
@@ -54,6 +54,7 @@ def build():
         "--hidden-import=qfluentwidgets.components",
         "--hidden-import=aiogram",
         "--hidden-import=aiogram.types",
+        "--hidden-import=flord.confirmation_system",
         "--hidden-import=openai",
         "--hidden-import=ollama",
         "--hidden-import=psutil",

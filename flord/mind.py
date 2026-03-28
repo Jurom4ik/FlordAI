@@ -11,6 +11,7 @@ from flord.llm_provider import LLMProvider
 from flord.config import Config
 from flord.package_manager import package_manager
 from flord.admin_helper import ensure_admin_and_execute, is_admin
+from flord.confirmation_system import confirmation_system, DangerLevel
 
 
 pattern_code = r"<python>(.*?)</python>"
@@ -315,14 +316,25 @@ class Mind:
                             print(f"🔧 Автоматически исправлен код")
                             code = fixed_code
                     
-                    # 3. Проверяем и устанавливаем необходимые пакеты
+                    # 3. Проверяем код на опасность
+                    danger_level, warning_msg = confirmation_system.analyze_action(code)
+                    print(f"🔍 {warning_msg}")
+                    
+                    # Если опасное действие, требуем подтверждение
+                    if danger_level in [DangerLevel.WARNING, DangerLevel.DANGER, DangerLevel.CRITICAL]:
+                        # Здесь нужно запросить подтверждение через UI
+                        print(f"⚠️ Требуется подтверждение для {danger_level.value}")
+                        # Временно: авто-подтверждение для демо
+                        # В реальном коде здесь будет запрос через UI
+                    
+                    # 4. Проверяем и устанавливаем необходимые пакеты
                     installed, failed = package_manager.install_for_code(code)
                     if installed:
                         print(f"✅ Установлены пакеты: {', '.join(installed)}")
                     if failed:
                         print(f"❌ Не удалось установить: {', '.join(failed)}")
                     
-                    # 4. Выполняем код с возможностью самоисправления
+                    # 5. Выполняем код с возможностью самоисправления
                     result = self.execute_with_self_correction(code)
                     return result
                     
